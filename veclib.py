@@ -47,6 +47,8 @@ class Vec:
     def norm(self):
         """ Normalize the vector """
         m = self.mag()
+        if (m == 0):
+            return Vec(*[0 for e in self.elem])
         return Vec(*[e / m for e in self.elem])
 
     def angle(self, v):
