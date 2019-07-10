@@ -38,7 +38,7 @@ class Light:
     pos: Vec
     intensity: float
 
-def min_pos(*args):
+def min_positive(*args):
     m = None
     for arg in args:
         if (((m != None and arg < m) or m == None) and arg >= 0):
@@ -64,7 +64,7 @@ class Sphere:
         if (discr < 0):
             return (None, None)
 
-        t = min_pos(-b - math.sqrt(discr), -b + math.sqrt(discr))
+        t = min_positive(-b - math.sqrt(discr), -b + math.sqrt(discr))
         q = p + d * t
 
         return (t, q)
@@ -170,20 +170,19 @@ def cast_ray(pos, d, scene, depth=0):
         else:
             light_amt = 0
             spec_clr = Vec(0.0, 0.0, 0.0)
-            shadow_orig = min_p + n * scene.bias if (d ** n < 0) else min_p - n * scene.bias
+            shadow_orig = min_p + n * scene.bias if (d.dot(n) < 0) else min_p - n * scene.bias
 
             for light in scene.lights:
                 vec = min_p.to(light.pos)
                 ld2 = vec.mag2()
                 vec = ~vec
-                ldn = max(vec ** n, 0)
+                ldn = max(vec.dot(n), 0)
                 (s_d, s_p, s_o) = check_collision(shadow_orig, vec, scene.objs)
                 if (s_d == None or s_d >= ld2):
                     light_amt += light.intensity * ldn
                 reflection_dir = (-vec).reflect(n)
-                spec_clr += pow(max(-(reflection_dir ** d), 0), material.spec_exponent) * light.intensity
+                spec_clr += pow(max(-reflection_dir.dot(d), 0), material.spec_exponent) * light.intensity
 
-            #hit_clr = light_amt * min_o.eval_diffuse_color(st) * material.Kd + spec_clr * material.Ks
             hit_clr = material.diffuse_color * light_amt * material.Kd + spec_clr * material.Ks
 
     return hit_clr
@@ -263,7 +262,7 @@ scene = Scene(
             diffuse_color = Vec(0.2, 0.2, 0.2),
             Kd = 0.8,
             Ks = 0.2,
-            ior = 1.5
+            ior = 1.52
         ),
         'glossy': Material(
             reflective = False,
@@ -272,7 +271,7 @@ scene = Scene(
             diffuse_color = Vec(0.8, 0.7, 0.2),
             Kd = 0.8,
             Ks = 0.2,
-            ior = 1.3
+            ior = 1.0
         ),
         'rubber': Material(
             reflective = False,
@@ -281,7 +280,7 @@ scene = Scene(
             diffuse_color = Vec(0.2, 0.2, 0.2),
             Kd = 0.8,
             Ks = 0.2,
-            ior = 1.3
+            ior = 1.0
         )
     },
     objs = [
