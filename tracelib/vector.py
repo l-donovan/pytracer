@@ -30,11 +30,11 @@ class Vec:
         if (self.nElem != 3 or v.nElem != 3):
             raise CrossProductException('The cross product operation is only defined for two 3-dimensional vectors')
         else:
-            return [
+            return Vec(
                 self.elem[1] * v.elem[2] - self.elem[2] * v.elem[1],
                 self.elem[2] * v.elem[0] - self.elem[0] * v.elem[2],
                 self.elem[0] * v.elem[1] - self.elem[1] * v.elem[0]
-            ]
+            )
 
     def mag2(self):
         """ Calculate the squared magnitude of vector """
@@ -63,11 +63,7 @@ class Vec:
 
     def dist(self, v):
         """ Calculate the distance between two vectors """
-        return (self - v).mag()
-
-    def reflect(self, n):
-        """ Calculate the reflection off of a surface given the surface's normal vector """
-        return self - n * self.dot(n) * 2
+        return (v - self).mag()
     
     def each(self, f):
         """ Iterate through each item in the vector """
@@ -76,9 +72,6 @@ class Vec:
     def map(self, f):
         """ Apply a function to each item in the vector """
         self.elem = self.each(f)
-
-    def to(self, v):
-        return v - self
 
     def __add__(self, o):
         if (isinstance(o, Vec)):
