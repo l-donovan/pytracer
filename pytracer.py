@@ -12,7 +12,7 @@ scene = Scene(
             diffuse_color = Vec(0.2, 0.2, 0.2),
             Kd = 0.8,
             Ks = 0.2,
-            ior = 1.5
+            ior = 1.52
         ),
         'glossy': Material(
             reflective = False,
@@ -21,7 +21,7 @@ scene = Scene(
             diffuse_color = Vec(0.8, 0.7, 0.2),
             Kd = 0.8,
             Ks = 0.2,
-            ior = 1.3
+            ior = 1.0
         ),
         'rubber': Material(
             reflective = False,
