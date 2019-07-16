@@ -188,7 +188,6 @@ def cast_ray(pos, d, scene, options, depth=0, dist=None):
     return hit_color, total_dist
 
 
-
 def render_worker(scene, camera, options, in_queue, out_queue):
     while True:
         y = in_queue.get()
@@ -210,7 +209,6 @@ def render_worker(scene, camera, options, in_queue, out_queue):
 
         print(str(y).ljust(4), end=' ', flush=True)
         out_queue.put((y, line_color, line_dist))
-
 
 
 def render_scene(scene, camera, options):
@@ -320,7 +318,7 @@ STD_MATERIALS = {
     'glass': Material(
         reflective=True,
         refractive=True,
-        spec_exponent=25,
+        specular_exp=25,
         diffuse_color=Vec(0.2, 0.2, 0.2),
         Kd=0.8,
         Ks=0.2,
@@ -329,7 +327,7 @@ STD_MATERIALS = {
     'glossy': Material(
         reflective=False,
         refractive=False,
-        spec_exponent=25,
+        specular_exp=25,
         diffuse_color=Vec(0.8, 0.7, 0.2),
         Kd=0.8,
         Ks=0.2,
@@ -338,7 +336,7 @@ STD_MATERIALS = {
     'rubber': Material(
         reflective=False,
         refractive=False,
-        spec_exponent=25,
+        specular_exp=25,
         diffuse_color=Vec(0.2, 0.2, 0.2),
         Kd=0.8,
         Ks=0.2,
@@ -347,7 +345,7 @@ STD_MATERIALS = {
     'floor': Material(
         reflective=False,
         refractive=False,
-        spec_exponent=1,
+        specular_exp=1,
         diffuse_color=Vec(0.8, 0.8, 0.8),
         Kd=0.8,
         Ks=0.2,
@@ -356,7 +354,7 @@ STD_MATERIALS = {
     'mirror': Material(
         reflective=True,
         refractive=False,
-        spec_exponent=25,
+        specular_exp=25,
         diffuse_color=Vec(0.1, 0.1, 0.1),
         Kd=1.0,
         Ks=0.2,
@@ -392,11 +390,11 @@ STD_COLORS = {
     'silver':   Vec(0.752941, 0.752941, 0.752941),
     'violet':   Vec(0.541176, 0.168627, 0.886275),
     'apricot':  Vec(0.984314, 0.807843, 0.694118),
-    'chartreuse':   Vec(0.5, 1.0, 0.0),
-    'orange-red':   Vec(1.0, 0.270588, 0.0),
-    'blueberry':    Vec(0.309804, 0.52549, 0.968627),
-    'raspberry':    Vec(0.890196, 0.043137, 0.360784),
-    'turquoise':    Vec(0.25098, 0.878431, 0.815686),
-    'amethyst':     Vec(0.6, 0.4, 0.8),
+    'chartreuse':     Vec(0.5, 1.0, 0.0),
+    'orange-red':     Vec(1.0, 0.270588, 0.0),
+    'blueberry':      Vec(0.309804, 0.52549, 0.968627),
+    'raspberry':      Vec(0.890196, 0.043137, 0.360784),
+    'turquoise':      Vec(0.25098, 0.878431, 0.815686),
+    'amethyst':       Vec(0.6, 0.4, 0.8),
     'celestial-blue': Vec(0.286275, 0.592157, 0.815686),
 }
