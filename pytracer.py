@@ -1,56 +1,8 @@
-from tracelib.core import *
-from tracelib.primitives import Sphere, Plane
-from tracelib.vector import Vec
+from tracelib import *
 
 scene = Scene(
-    background_color=Vec(0.235294, 0.67451, 0.843137),
-    materials={
-        'glass': Material(
-            reflective=True,
-            refractive=True,
-            specular_exp=25,
-            diffuse_color=Vec(0.2, 0.2, 0.2),
-            Kd=0.8,
-            Ks=0.2,
-            ior=1.52
-        ),
-        'glossy': Material(
-            reflective=False,
-            refractive=False,
-            specular_exp=25,
-            diffuse_color=Vec(0.8, 0.7, 0.2),
-            Kd=0.8,
-            Ks=0.2,
-            ior=1.0
-        ),
-        'rubber': Material(
-            reflective=False,
-            refractive=False,
-            specular_exp=25,
-            diffuse_color=Vec(0.2, 0.2, 0.2),
-            Kd=0.8,
-            Ks=0.2,
-            ior=1.3
-        ),
-        'floor': Material(
-            reflective=False,
-            refractive=False,
-            specular_exp=1,
-            diffuse_color=Vec(0.8, 0.8, 0.8),
-            Kd=0.8,
-            Ks=0.2,
-            ior=1.3
-        ),
-        'mirror': Material(
-            reflective=True,
-            refractive=False,
-            specular_exp=25,
-            diffuse_color=Vec(0.1, 0.1, 0.1),
-            Kd=1.0,
-            Ks=0.2,
-            ior=0.01
-        )
-    },
+    background_color=STD_COLORS['celestial-blue'],
+    materials=STD_MATERIALS,
     # x is horizontal position (right-positive)
     # y is vertical position (top-positive)
     # z is distance from camera (far-positive)
@@ -102,11 +54,11 @@ camera = Camera(
     fov=90.0,
     res=(960, 540),
     pos=Vec(0, 0, 0),
-    rot=Vec(0, 0, 0.25)
+    rot=Vec(0, 0, 0)
 )
 
 options = Options(
-    max_depth=4,
+    max_depth=5,
     proc_count=4
 )
 

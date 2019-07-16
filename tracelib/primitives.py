@@ -1,7 +1,7 @@
-from .core import NO_INTERSECTION, min_positive, clamp
+import math
+from .core import NO_INTERSECTION, min_positive
 from .vector import Vec
 
-import math
 
 
 class Sphere:
@@ -30,6 +30,7 @@ class Sphere:
 
     def normal(self, p, q):
         return (q - self.pos).norm()
+
 
 
 class Plane:
@@ -66,6 +67,7 @@ class Plane:
             n *= -1
 
         return n.norm()
+
 
 
 class Triangle:
