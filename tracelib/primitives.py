@@ -1,7 +1,7 @@
 import math
-
-from .core import NO_INTERSECTION, min_pos
+from .core import NO_INTERSECTION, min_positive
 from .vector import Vec
+
 
 
 class Sphere:
@@ -23,13 +23,14 @@ class Sphere:
         if discr < 0:
             return NO_INTERSECTION
 
-        t = min_pos(-b - math.sqrt(discr), -b + math.sqrt(discr))
+        t = min_positive(-b - math.sqrt(discr), -b + math.sqrt(discr))
         q = p + d * t
 
         return t, q
 
     def normal(self, p, q):
-        return ~(q - self.pos)
+        return (q - self.pos).norm()
+
 
 
 class Plane:
@@ -65,7 +66,8 @@ class Plane:
         if r < 0:
             n *= -1
 
-        return ~n
+        return n.norm()
+
 
 
 class Triangle:
@@ -91,9 +93,9 @@ class Triangle:
 
         q = p + d * t
 
-        if ((n.dot((self.v1 - self.v0).cross(q - self.v0)) < 0) or
-                (n.dot((self.v2 - self.v1).cross(q - self.v1)) < 0) or
-                (n.dot((self.v0 - self.v2).cross(q - self.v2)) < 0)):
+        if n.dot((self.v1 - self.v0).cross(q - self.v0)) < 0 or \
+           n.dot((self.v2 - self.v1).cross(q - self.v1)) < 0 or \
+           n.dot((self.v0 - self.v2).cross(q - self.v2)) < 0:
             return NO_INTERSECTION
 
         return t, q
@@ -106,4 +108,4 @@ class Triangle:
         if r < 0:
             n *= -1
 
-        return ~n
+        return n.norm()

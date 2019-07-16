@@ -12,9 +12,9 @@ NO_INTERSECTION = (None, None)
 @dataclass
 class Camera:
     fov: float
-    res: list  # w, h
-    pos: Vec  # x, y, z
-    rot: Vec  # roll, pan, tilt
+    res: tuple  # w, h
+    pos: Vec    # x, y, z
+    rot: Vec    # roll, pan, tilt
 
 
 @dataclass
@@ -36,11 +36,11 @@ class Options:
 class Material:
     reflective: bool
     refractive: bool
-    spec_exponent: float
+    specular_exp: float
     diffuse_color: Vec
-    Kd: float  # Diffuse reflection
-    Ks: float  # Specular reflection
-    ior: float
+    Kd: float   # Diffuse reflection coefficient
+    Ks: float   # Specular reflection coefficient
+    ior: float  # Index of refraction
 
 
 @dataclass
@@ -49,9 +49,16 @@ class Light:
     intensity: float
 
 
-min_pos = lambda *args: min([x for x in args if x >= 0])
-clamp = lambda x, m, M: max(min(x, M), m)
-sgn = lambda n: math.copysign(1, n)
+def min_positive(*args):
+    return min([arg for arg in args if arg >= 0])
+
+
+def clamp(num, lower, upper):
+    return max(min(num, upper), lower)
+
+
+def sgn(num):
+    return (num > 0) - (num < 0)
 
 
 def rot(v, cos_rx, cos_ry, cos_rz, sin_rx, sin_ry, sin_rz):
@@ -65,19 +72,15 @@ def rot(v, cos_rx, cos_ry, cos_rz, sin_rx, sin_ry, sin_rz):
     )
 
 
-def check_intersection(pos, v, objs):
-    min_d = None
-    min_p = None
-    min_o = None
+def check_intersection(origin, v, objs):
+    hit_dist, hit_pos, hit_obj = None, None, None
 
     for obj in objs:
-        (d, p) = obj.intersection(pos, v)
-        if d is not None and (min_d is None or d < min_d):
-            min_d = d
-            min_p = p
-            min_o = obj
+        dist, pos = obj.intersection(origin, v)
+        if dist is not None and (hit_dist is None or dist < hit_dist):
+            hit_dist, hit_pos, hit_obj = dist, pos, obj
 
-    return min_d, min_p, min_o
+    return hit_dist, hit_pos, hit_obj
 
 
 def reflect(d, n):
@@ -124,90 +127,99 @@ def fresnel(d, n, ior):
         return (rs * rs + rp * rp) / 2.0
 
 
-def cast_ray(pos, d, scene, options, depth=0):
-    hit_clr = scene.background_color
+def cast_ray(pos, d, scene, options, depth=0, dist=None):
+    hit_color = scene.background_color
 
     if depth > options.max_depth:
-        return hit_clr
+        return hit_color, dist
 
-    (min_d, min_p, min_o) = check_intersection(pos, d, scene.objs)
+    hit_dist, hit_pos, hit_obj = check_intersection(pos, d, scene.objs)
 
-    if min_d is not None:
-        material = scene.materials[min_o.material]
+    if hit_dist is None:
+        total_dist = dist
+    elif dist is None:
+        total_dist = hit_dist
+    else:
+        total_dist = dist + hit_dist
 
-        n = min_o.normal(pos, min_p)
+    if hit_dist is not None:
+        material = scene.materials[hit_obj.material]
+
+        n = hit_obj.normal(pos, hit_pos)
 
         # TODO reflection is broken, refraction is not
         if material.reflective:
             kr = fresnel(d, n, material.ior)
 
             if material.refractive:
-                reflection_dir = ~reflect(d, n)
-                reflection_orig = min_p - n * options.bias if (reflection_dir.dot(n) < 0) else min_p + n * options.bias
-                reflection_clr = cast_ray(reflection_orig, reflection_dir, scene, options, depth=depth + 1)
-                refraction_dir = ~refract(d, n, material.ior)
-                refraction_orig = min_p - n * options.bias if (refraction_dir.dot(n) < 0) else min_p + n * options.bias
-                refraction_clr = cast_ray(refraction_orig, refraction_dir, scene, options, depth=depth + 1)
-                hit_clr = reflection_clr * kr + refraction_clr * (1 - kr)
+                reflection_dir = reflect(d, n).norm()
+                reflection_origin = hit_pos + n * options.bias * sgn(reflection_dir.dot(n))
+                reflection_color, total_dist = \
+                    cast_ray(reflection_origin, reflection_dir, scene, options, depth=depth + 1, dist=total_dist)
+                refraction_dir = refract(d, n, material.ior).norm()
+                refraction_origin = hit_pos + n * options.bias * sgn(refraction_dir.dot(n))
+                refraction_color, total_dist = \
+                    cast_ray(refraction_origin, refraction_dir, scene, options, depth=depth + 1, dist=total_dist)
+                hit_color = reflection_color * kr + refraction_color * (1 - kr)
             else:
-                reflection_dir = reflect(d, n)
-                reflection_orig = min_p + n * options.bias if (reflection_dir.dot(n) < 0) else min_p - n * options.bias
-                reflection_clr = cast_ray(reflection_orig, reflection_dir, scene, options, depth=depth + 1)
-                hit_clr = reflection_clr * kr
-
+                reflection_dir = reflect(d, n).norm()
+                reflection_origin = hit_pos - n * options.bias * sgn(reflection_dir.dot(n))
+                reflection_color, total_dist = \
+                    cast_ray(reflection_origin, reflection_dir, scene, options, depth=depth + 1, dist=total_dist)
+                hit_color = reflection_color * kr
         else:
             light_amt = 0
-            spec_clr = Vec(0.0, 0.0, 0.0)
-            shadow_orig = min_p + n * options.bias if (d.dot(n) < 0) else min_p - n * options.bias
+            specular_color = Vec(0.0, 0.0, 0.0)
+            shadow_origin = hit_pos + n * options.bias if (d.dot(n) < 0) else hit_pos - n * options.bias
 
             for light in scene.lights:
-                vec = light.pos - shadow_orig
+                vec = light.pos - shadow_origin
                 ld2 = vec.mag2()
-                vec = ~vec
+                vec = vec.norm()
                 ldn = max(vec.dot(n), 0)
-                (s_d, s_p, s_o) = check_intersection(shadow_orig, vec, scene.objs)
-                if s_d is None or (s_d ** 2) >= ld2:
+                shadow_dist, shadow_pos, shadow_obj = check_intersection(shadow_origin, vec, scene.objs)
+                if shadow_dist is None or (shadow_dist ** 2) >= ld2:
                     light_amt += light.intensity * ldn
                 reflection_dir = reflect(-vec, n)
-                spec_clr += pow(max(-reflection_dir.dot(d), 0), material.spec_exponent) * light.intensity
+                specular_color += pow(max(-reflection_dir.dot(d), 0), material.specular_exp) * light.intensity
 
-            hit_clr = material.diffuse_color * light_amt * material.Kd + spec_clr * material.Ks
+            hit_color = material.diffuse_color * light_amt * material.Kd + specular_color * material.Ks
 
-    return hit_clr
+    return hit_color, total_dist
+
 
 
 def render_worker(scene, camera, options, in_queue, out_queue):
     while True:
         y = in_queue.get()
 
-        line = [(0, 0, 0) for j in range(camera.res[0])]
-
-        # if (y % 2):
-        #    out_queue.put((y, line))
-        #    continue
+        line_color = [(0, 0, 0) for j in range(camera.res[0])]
+        line_dist = [None for j in range(camera.res[0])]
 
         for x in range(camera.res[0]):
-            vec = ~rot(Vec(
+            vec = rot(Vec(
                 (2 * (x + 0.5) / camera.res[0] - 1) * camera.aspect_ratio * camera.scale,
                 (1 - 2 * (y + 0.5) / camera.res[1]) * camera.scale,
                 1.0
-            ), camera.cos_rx, camera.cos_ry, camera.cos_rz, camera.sin_rx, camera.sin_ry, camera.sin_rz)
+            ), camera.cos_rx, camera.cos_ry, camera.cos_rz, camera.sin_rx, camera.sin_ry, camera.sin_rz).norm()
 
-            c = cast_ray(camera.pos, vec, scene, options)
-            line[x] = tuple(int(0xff * x) for x in c)
+            color, dist = cast_ray(camera.pos, vec, scene, options)
+
+            line_color[x] = (int(0xff * color[0]), int(0xff * color[1]), int(0xff * color[2]))
+            line_dist[x] = dist if dist is not None else 100000
 
         print(str(y).ljust(4), end=' ', flush=True)
-        out_queue.put((y, line))
+        out_queue.put((y, line_color, line_dist))
+
 
 
 def render_scene(scene, camera, options):
     print('Rendering scene...')
     u = time.time()
 
-    camera.cos_rx, camera.cos_ry, camera.cos_rz = math.cos(camera.rot[0]), math.cos(camera.rot[1]), math.cos(
-        camera.rot[2])
-    camera.sin_rx, camera.sin_ry, camera.sin_rz = math.sin(camera.rot[0]), math.sin(camera.rot[1]), math.sin(
-        camera.rot[2])
+    camera.cos_rx, camera.cos_ry, camera.cos_rz, camera.sin_rx, camera.sin_ry, camera.sin_rz = \
+        math.cos(camera.rot[0]), math.cos(camera.rot[1]), math.cos(camera.rot[2]), \
+        math.sin(camera.rot[0]), math.sin(camera.rot[1]), math.sin(camera.rot[2])
 
     camera.aspect_ratio = camera.res[0] / camera.res[1]
     camera.scale = math.tan(math.radians(camera.fov / 2.0))
@@ -233,20 +245,26 @@ def render_scene(scene, camera, options):
         processes.append(proc)
         proc.start()
 
-    slices = [job_out_queue.get() for n in range(line_count)]
+    slices = sorted([job_out_queue.get() for n in range(line_count)], key=lambda k: k[0])
 
     for i in range(options.proc_count):
         processes[i].terminate()
 
-    screen = [s[1] for s in sorted(slices, key=lambda i: i[0])]
+    screen = [s[1] for s in slices]
+    depth = [s[2] for s in slices]
 
     v = time.time()
     print('\nScene took {} seconds to render'.format(v - u))
+
+    q = fxaa(screen, depth)
+    # print(q)
 
     return screen
 
 
 def fxaa(pixels, depthmap):
+    # Anti-aliasing tk
+
     w = len(pixels[0])
     h = len(pixels)
 
@@ -278,9 +296,9 @@ def fxaa(pixels, depthmap):
 
     for y in range(h):
         for x in range(w):
-            d_adj = dmap[y][x]
+            diff = dmap[y][x]
 
-            if d_adj > 0.5:
+            if diff > 10:
                 pass  # it's an edge maybe?
 
     return dmap
