@@ -296,3 +296,89 @@ def image_from_pixels(pixels):
             pix[i, j] = pixels[j][i]
 
     return img
+
+
+STD_MATERIALS = {
+    'glass': Material(
+        reflective=True,
+        refractive=True,
+        spec_exponent=25,
+        diffuse_color=Vec(0.2, 0.2, 0.2),
+        Kd=0.8,
+        Ks=0.2,
+        ior=1.52
+    ),
+    'glossy': Material(
+        reflective=False,
+        refractive=False,
+        spec_exponent=25,
+        diffuse_color=Vec(0.8, 0.7, 0.2),
+        Kd=0.8,
+        Ks=0.2,
+        ior=1.0
+    ),
+    'rubber': Material(
+        reflective=False,
+        refractive=False,
+        spec_exponent=25,
+        diffuse_color=Vec(0.2, 0.2, 0.2),
+        Kd=0.8,
+        Ks=0.2,
+        ior=1.3
+    ),
+    'floor': Material(
+        reflective=False,
+        refractive=False,
+        spec_exponent=1,
+        diffuse_color=Vec(0.8, 0.8, 0.8),
+        Kd=0.8,
+        Ks=0.2,
+        ior=1.3
+    ),
+    'mirror': Material(
+        reflective=True,
+        refractive=False,
+        spec_exponent=25,
+        diffuse_color=Vec(0.1, 0.1, 0.1),
+        Kd=1.0,
+        Ks=0.2,
+        ior=0.01
+    )
+}
+
+# Uses standard colors in opencv::viz
+STD_COLORS = {
+    'black':    Vec(0.0, 0.0, 0.0),
+    'white':    Vec(1.0, 1.0, 1.0),
+    'red':      Vec(1.0, 0.0, 0.0),
+    'green':    Vec(0.0, 1.0, 0.0),
+    'blue':     Vec(0.0, 0.0, 1.0),
+    'yellow':   Vec(1.0, 1.0, 0.0),
+    'cyan':     Vec(0.0, 1.0, 1.0),
+    'magenta':  Vec(1.0, 0.0, 1.0),
+    'grey':     Vec(0.5, 0.5, 0.5),
+    'navy':     Vec(0.0, 0.0, 0.5),
+    'olive':    Vec(0.5, 0.5, 0.0),
+    'maroon':   Vec(0.5, 0.0, 0.0),
+    'teal':     Vec(0.0, 0.5, 0.5),
+    'purple':   Vec(0.5, 0.0, 0.5),
+    'rose':     Vec(1.0, 0.0, 0.5),
+    'azure':    Vec(0.0, 0.5, 1.0),
+    'lime':     Vec(0.749019, 1.0, 0.0),
+    'gold':     Vec(1.0, 0.843138, 0.0),
+    'brown':    Vec(0.164706, 0.164706, 0.647059),
+    'orange':   Vec(1.0, 0.647059, 0.0),
+    'indigo':   Vec(0.294118, 0.0, 0.509804),
+    'pink':     Vec(1.0, 0.752941, 0.796078),
+    'cherry':   Vec(0.870588, 0.113725, 0.388235),
+    'silver':   Vec(0.752941, 0.752941, 0.752941),
+    'violet':   Vec(0.541176, 0.168627, 0.886275),
+    'apricot':  Vec(0.984314, 0.807843, 0.694118),
+    'chartreuse':   Vec(0.5, 1.0, 0.0),
+    'orange-red':   Vec(1.0, 0.270588, 0.0),
+    'blueberry':    Vec(0.309804, 0.52549, 0.968627),
+    'raspberry':    Vec(0.890196, 0.043137, 0.360784),
+    'turquoise':    Vec(0.25098, 0.878431, 0.815686),
+    'amethyst':     Vec(0.6, 0.4, 0.8),
+    'celestial-blue': Vec(0.286275, 0.592157, 0.815686),
+}
